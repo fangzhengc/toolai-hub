@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToolAI Hub - AI工具导航</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        neon: '#A855F7',
+        'bg-main': '#0A0A0A',
+        'bg-card': '#1E1E1E',
+      }
+    }
+  }
+}
+</script>
+<style>
+body { background: #0A0A0A; color: #E5E5E5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1E1E1E; }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+.card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.card-hover:hover { transform: translateY(-6px); box-shadow: 0 8px 30px rgba(168, 85, 247, 0.25); }
+.cat-btn { transition: all 0.2s ease; }
+.cat-btn.active, .cat-btn:hover { background: #A855F7; color: #fff; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; margin-right: 4px; }
+.ad-banner {
+  background: #181818;
+  border: 2px dashed #555;
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ad-banner .ad-label {
+  color: #777;
+  font-size: 16px;
+  letter-spacing: 6px;
+  user-select: none;
+}
+.ad-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+}
+.ad-close:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- 顶部 -->
+<header class="sticky top-0 z-50 bg-bg-main/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center gap-3">
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">T</div>
+      <div>
+        <h1 class="text-xl font-bold text-white">ToolAI Hub</h1>
+        <p class="text-xs text-gray-500">发现最好的 AI 工具</p>
+      </div>
+    </div>
+    <div class="flex-1 w-full sm:max-w-md ml-auto relative">
+      <input id="searchInput" type="text" placeholder="搜索 AI 工具..."
+        class="w-full bg-gray-800 text-white rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-neon text-sm border border-gray-700 focus:border-neon transition" />
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    </div>
+  </div>
+
+  <!-- 广告位1：搜索框下方通栏 90px -->
+  <div class="max-w-6xl mx-auto px-4 pb-3">
+    <div id="adBanner1" class="ad-banner" style="height:90px;">
+      <span class="ad-label">广告位招租</span>
+      <span class="ad-close" onclick="document.getElementById('adBanner1').style.display='none'" title="关闭广告">&times;</span>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+
+  <!-- 左侧分类栏 -->
+  <aside class="w-full lg:w-52 shrink-0 lg:sticky lg:top-[180px] lg:self-start">
+    <nav id="categoryNav" class="bg-bg-card rounded-2xl p-4 space-y-1.5">
+      <p class="text-xs text-gray-500 mb-2 px-2">分类</p>
+    </nav>
+
+    <!-- 广告位2：分类栏下方 250px -->
+    <div id="adSidebar" class="ad-banner mt-4" style="height:250px;">
+      <span class="ad-label">广告位招租</span>
+    </div>
+  </aside>
+
+  <!-- 主体卡片 -->
+  <main class="flex-1 min-w-0">
+    <div id="toolCount" class="text-sm text-gray-500 mb-4">共 <span class="text-neon font-bold">0</span> 个工具</div>
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    <div id="noResult" class="hidden text-center text-gray-500 py-20 text-lg">没有找到匹配的工具 🔍</div>
+  </main>
+</div>
+
+<footer class="text-center text-xs text-gray-600 py-8 border-t border-gray-800 mt-8">
+  &copy; 2026 ToolAI Hub. All rights reserved.
+</footer>
+
+<script>
+// ========== 数据 ==========
+const toolsData = [
+  { name: 'ChatGPT', icon: '🤖', desc: 'OpenAI 出品的对话式 AI 助手，能力全面，生态完善', tags: ['对话大模型', '效率工具'], url: 'https://chat.openai.com', category: '对话大模型', pricing: '免费' },
+  { name: 'Claude', icon: '🧠', desc: 'Anthropic 出品，擅长长文本分析与复杂推理', tags: ['对话大模型'], url: 'https://claude.ai', category: '对话大模型', pricing: '免费' },
+  { name: 'Gemini', icon: '💎', desc: 'Google 出品的多模态 AI，集成搜索与知识', tags: ['对话大模型'], url: 'https://gemini.google.com', category: '对话大模型', pricing: '免费' },
+  { name: '文心一言', icon: '📝', desc: '百度出品，中文能力强，深度整合百度生态', tags: ['对话大模型', '国内精选'], url: 'https://yiyan.baidu.com', category: '国内精选', pricing: '免费' },
+  { name: '通义千问', icon: '🔮', desc: '阿里巴巴出品，开源生态丰富，支持多模态', tags: ['对话大模型', '国内精选'], url: 'https://tongyi.aliyun.com', category: '国内精选', pricing: '免费' },
+  { name: 'Kimi', icon: '🌟', desc: '月之暗面出品，超长上下文窗口，擅长阅读理解', tags: ['对话大模型', '国内精选'], url: 'https://kimi.moonshot.cn', category: '国内精选', pricing: '免费' },
+  { name: '豆包', icon: '🫘', desc: '字节跳动出品，对话自然流畅，集成创作工具', tags: ['对话大模型', '国内精选'], url: 'https://www.doubao.com', category: '国内精选', pricing: '免费' },
+  { name: 'DeepSeek', icon: '🔬', desc: '深度求索，开源推理模型，性价比极高', tags: ['对话大模型', '国内精选'], url: 'https://chat.deepseek.com', category: '国内精选', pricing: '免费' },
+  { name: 'Midjourney', icon: '🎨', desc: '顶级 AI 绘画工具，图像质量业界领先', tags: ['AI绘画'], url: 'https://midjourney.com', category: 'AI绘画', pricing: '收费' },
+  { name: 'DALL·E 3', icon: '🖌️', desc: 'OpenAI 出品的图像生成，文字渲染能力强', tags: ['AI绘画'], url: 'https://openai.com/dall-e-3', category: 'AI绘画', pricing: '收费' },
+  { name: 'Stable Diffusion', icon: '🖼️', desc: '开源图像生成模型，可本地部署，自由度高', tags: ['AI绘画'], url: 'https://stability.ai', category: 'AI绘画', pricing: '免费' },
+  { name: 'Runway', icon: '🎬', desc: 'AI 视频生成领导者，支持文生视频和图生视频', tags: ['AI视频'], url: 'https://runwayml.com', category: 'AI视频', pricing: '收费' },
+  { name: 'Pika', icon: '🎞️', desc: '快速 AI 视频生成，风格多样，上手简单', tags: ['AI视频'], url: 'https://pika.art', category: 'AI视频', pricing: '收费' },
+  { name: '可灵 (Kling)', icon: '📹', desc: '快手出品，高质量 AI 视频生成，动作自然', tags: ['AI视频', '国内精选'], url: 'https://klingai.kuaishou.com', category: 'AI视频', pricing: '收费' },
+  { name: 'Copy.ai', icon: '✍️', desc: '营销文案生成工具，支持多种营销场景', tags: ['AI写作'], url: 'https://copy.ai', category: 'AI写作', pricing: '免费' },
+  { name: 'Jasper', icon: '📝', desc: '企业级 AI 写作平台，品牌内容自动化', tags: ['AI写作'], url: 'https://jasper.ai', category: 'AI写作', pricing: '收费' },
+  { name: 'Notion AI', icon: '📓', desc: '集成在 Notion 中的 AI 写作与整理助手', tags: ['AI写作', '效率工具'], url: 'https://notion.so', category: '效率工具', pricing: '收费' },
+  { name: 'Gamma', icon: '📊', desc: 'AI 一键生成精美演示文稿和文档', tags: ['效率工具'], url: 'https://gamma.app', category: '效率工具', pricing: '免费' },
+  { name: 'Perplexity', icon: '🔎', desc: 'AI 驱动的搜索引擎，回答附带来源引用', tags: ['效率工具'], url: 'https://perplexity.ai', category: '效率工具', pricing: '免费' },
+  { name: 'Cursor', icon: '⌨️', desc: 'AI 编程编辑器，深度集成代码生成与补全', tags: ['效率工具'], url: 'https://cursor.sh', category: '效率工具', pricing: '免费' },
+];
+
+const categories = [
+  { id: 'all', label: '全部' },
+  { id: '对话大模型', label: '对话大模型' },
+  { id: 'AI绘画', label: 'AI绘画' },
+  { id: 'AI视频', label: 'AI视频' },
+  { id: 'AI写作', label: 'AI写作' },
+  { id: '效率工具', label: '效率工具' },
+  { id: '国内精选', label: '国内精选' },
+];
+
+const tagColors = {
+  '对话大模型': 'bg-blue-500/20 text-blue-400',
+  'AI绘画': 'bg-pink-500/20 text-pink-400',
+  'AI视频': 'bg-red-500/20 text-red-400',
+  'AI写作': 'bg-green-500/20 text-green-400',
+  '效率工具': 'bg-amber-500/20 text-amber-400',
+  '国内精选': 'bg-purple-500/20 text-purple-400',
+  '免费': 'bg-emerald-500/20 text-emerald-400',
+  '收费': 'bg-rose-500/20 text-rose-400',
+};
+
+let currentCategory = 'all';
+let searchQuery = '';
+
+// ========== 渲染分类 ==========
+function renderCategories() {
+  const nav = document.getElementById('categoryNav');
+  nav.innerHTML = '<p class="text-xs text-gray-500 mb-2 px-2">分类</p>';
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn w-full text-left px-3 py-2 rounded-lg text-sm cursor-pointer ' + (cat.id === currentCategory ? 'active' : 'text-gray-400');
+    btn.textContent = cat.label;
+    btn.onclick = function() {
+      currentCategory = cat.id;
+      renderCategories();
+      renderGrid();
+    };
+    nav.appendChild(btn);
+  });
+}
+
+// ========== 渲染卡片 ==========
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const noResult = document.getElementById('noResult');
+  const q = searchQuery.toLowerCase();
+
+  var filtered = toolsData.filter(function(t) {
+    var matchCat = currentCategory === 'all' || t.category === currentCategory || t.tags.indexOf(currentCategory) !== -1;
+    var matchSearch = !q || t.name.toLowerCase().indexOf(q) !== -1 || t.desc.toLowerCase().indexOf(q) !== -1 || t.tags.some(function(tg) { return tg.toLowerCase().indexOf(q) !== -1; });
+    return matchCat && matchSearch;
+  });
+
+  document.getElementById('toolCount').innerHTML = '共 <span class="text-neon font-bold">' + filtered.length + '</span> 个工具';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    noResult.classList.remove('hidden');
+    return;
+  }
+  noResult.classList.add('hidden');
+
+  var html = '';
+  filtered.forEach(function(tool, i) {
+    // 每8个卡片插入一个广告卡片（跳过第一个，从第9个位置开始）
+    if (i > 0 && i % 8 === 0) {
+      html += '<div class="ad-banner" style="height:180px;border-radius:16px;">' +
+        '<span class="ad-label">广告位招租</span></div>';
+    }
+    var tagsHtml = tool.tags.map(function(t) {
+      return '<span class="tag ' + (tagColors[t] || 'bg-gray-700 text-gray-300') + '">' + t + '</span>';
+    }).join('');
+    var pricingHtml = '<span class="tag ' + (tagColors[tool.pricing] || 'bg-gray-700 text-gray-300') + '">' + tool.pricing + '</span>';
+    html += '<a href="' + tool.url + '" target="_blank" rel="noopener noreferrer" class="block bg-bg-card rounded-2xl p-5 card-hover border border-gray-800 hover:border-neon/50 no-underline">' +
+      '<div class="flex items-start gap-3">' +
+      '<div class="text-3xl shrink-0 mt-0.5">' + tool.icon + '</div>' +
+      '<div class="min-w-0">' +
+      '<h3 class="text-white font-semibold text-base mb-1">' + tool.name + '</h3>' +
+      '<p class="text-gray-400 text-sm leading-relaxed mb-2">' + tool.desc + '</p>' +
+      '<div class="flex flex-wrap gap-1">' + tagsHtml + pricingHtml + '</div>' +
+      '</div></div></a>';
+  });
+  grid.innerHTML = html;
+}
+
+// ========== 搜索 ==========
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  searchQuery = e.target.value.trim();
+  renderGrid();
+});
+
+// ========== 初始化 ==========
+renderCategories();
+renderGrid();
+</script>
+</body>
+</html>
